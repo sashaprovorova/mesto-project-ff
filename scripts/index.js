@@ -1,14 +1,22 @@
 // находим место под карточки
 const placesList = document.querySelector('.places__list');
 
+// клонируем содержимое тега template
+const getTemplate = () => {
+  return document
+    .querySelector("#card-template")
+    .content.querySelector(".card")
+    .cloneNode(true);
+};
+
 //  функция создания карточки
-function createCard(card, deleteCard) {
-  // клонируем содержимое тега template
-  const cardTemplate = document.querySelector('#card-template').content;
-  const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
+const createCard = (card, deleteCard) =>  {
+  const cardElement = getTemplate();
   // наполняем содержимым 
   cardElement.querySelector('.card__title').textContent = card.name;
   cardElement.querySelector('.card__image').src = card.link;
+  cardElement.querySelector('.card__image').alt = `Фотография места: ${card.name}`; 
+
   // удаляем при нажатии
   cardElement.querySelector('.card__delete-button').addEventListener('click', () => deleteCard(cardElement)); 
   // возвращаем готовую карточку
@@ -16,7 +24,7 @@ function createCard(card, deleteCard) {
 }
 
 // функция-колбэк удаления карточек
-function deleteCard(cardElement) {
+const deleteCard = (cardElement) => {
   cardElement.remove();
 }
 
