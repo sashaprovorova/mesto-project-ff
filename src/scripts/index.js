@@ -1,3 +1,13 @@
+import '../pages/index.css';
+import {initialCards} from './cards.js';
+import {openModal, closeModal}  from '../components/modal.js';
+
+// import logo from '../images/logo.svg';
+import avatar from '../images/avatar.jpg';
+
+// document.querySelector('.logo').src = logo;
+document.querySelector('.profile__image').style.backgroundImage = `url(${avatar})`;
+
 // находим место под карточки
 const placesList = document.querySelector('.places__list');
 
@@ -34,3 +44,6 @@ initialCards.forEach((card) => {
   // отображаем на странице
   placesList.append(createdCard);
 })
+
+
+
