@@ -7,7 +7,7 @@
 import '../pages/index.css';
 import {initialCards} from './cards.js';
 import {openModal, closeModal}  from '../components/modal.js';
-import {createCard, deleteCard, likeCard}  from '../components/card.js';
+import {createCard, deleteCard, likeCard, clickImage}  from '../components/card.js';
 
 // ПОДКЛЮЧАЕМ ЛОКАЛЬНЫЕ КАРТИНКИ 
 
@@ -23,11 +23,11 @@ document.querySelector('.profile__image').style.backgroundImage = `url(${avatar}
 const placesList = document.querySelector('.places__list');
 
 // пройтись по всему списку и создать каждую из карточек
-function createAllCards() {
+const createAllCards = () =>  {
   // удаляем изначально заложенные карточки
   placesList.innerHTML = "";
   initialCards.forEach((card) => {
-    const createdCard = createCard(card, deleteCard, likeCard);
+    const createdCard = createCard(card, deleteCard, likeCard, clickImage);
     // отображаем на странице
     placesList.append(createdCard);
   })
@@ -62,21 +62,17 @@ cardButton.addEventListener('click', () => {
 
 // находим нужные попап элементы для картинок в разметке
 const photoPopup = document.querySelector('.popup_type_image');
-const popupImage = photoPopup.querySelector('.popup__image');
-const popupCaption = photoPopup.querySelector('.popup__caption');
 
 // используем делегирование событий и выбираем список мест
 document.querySelector('.places__list').addEventListener('click', (event) => {
-    if (event.target.classList.contains('card__image')) {
-        // в зависисмости от выбранной картинки, добавляем инфо о ней
-        popupImage.src = event.target.src;
-        popupImage.alt = event.target.alt;
-        // находим текст и подписываем
-        const card = event.target.closest('.card');
-        popupCaption.textContent = card.querySelector('.card__title').textContent;
-        // вызываем функцию
-        openModal(photoPopup);
-    }
+  if (event.target.classList.contains('card__image')) {
+      const card = {
+        name: event.target.closest('.card').querySelector('.card__title').textContent,
+        link: event.target.src
+      };
+      clickImage(card);
+      openModal(photoPopup); 
+  }
 });
 
 // ЗАКРЫВАЕМ ПОПАПЫ
@@ -120,8 +116,9 @@ const jobInput = formElement.querySelector('.popup__input_type_description');
 const profileTitle = document.querySelector('.profile__title'); 
 const profileDescription = document.querySelector('.profile__description');
 
+
 // обработчик «отправки» формы, хотя пока она никуда отправляться не будет
-function handleFormSubmit(evt) {
+const handleFormSubmit = (evt) =>  {
   // отменяем стандартную отправку формы
   evt.preventDefault(); 
   // получиим значение полей jobInput и nameInput из свойства value
@@ -145,7 +142,7 @@ const placeInput = cardFormElement.querySelector('.popup__input_type_card-name')
 const linkInput = cardFormElement.querySelector('.popup__input_type_url'); 
 
 // обработчик «отправки» формы, хотя пока она никуда отправляться не будет
-function handleCardFormSubmit(evt) {
+const handleCardFormSubmit = (evt) => {
   // отменяем стандартную отправку формы
   evt.preventDefault(); 
   // получиим значение полей placeInput и linkInput из свойства value
@@ -162,6 +159,3 @@ function handleCardFormSubmit(evt) {
 
 // прикрепляем обработчик к форме
 cardFormElement.addEventListener('submit', handleCardFormSubmit);
-
-// ОСТАВЛЯЕМ ЛАЙК
-
