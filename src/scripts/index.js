@@ -7,7 +7,7 @@
 import '../pages/index.css';
 import {initialCards} from './cards.js';
 import {openModal, closeModal}  from '../components/modal.js';
-import {createCard, deleteCard, likeCard, clickImage}  from '../components/card.js';
+import {createCard, deleteCard, likeCard}  from '../components/card.js';
 
 // ПОДКЛЮЧАЕМ ЛОКАЛЬНЫЕ КАРТИНКИ 
 
@@ -16,6 +16,57 @@ import avatar from '../images/avatar.jpg';
 
 // document.querySelector('.logo').src = logo;
 document.querySelector('.profile__image').style.backgroundImage = `url(${avatar})`;
+
+// ОТКРЫВАЕМ ПОПАПЫ
+
+// находим нужные кнопки и попапы в разметке для профиля
+const buttonOpenEditProfilePopup = document.querySelector('.profile__edit-button');
+const popupEditProfile = document.querySelector('.popup_type_edit');
+
+// вызываем функцию открытия попапа при нажатии
+buttonOpenEditProfilePopup.addEventListener('click', () => { 
+  // добавляем значения для формы при откртыии попапа
+  nameInput.value = profileTitle.textContent; 
+  jobInput.value = profileDescription.textContent;
+  openModal(popupEditProfile);
+});
+
+// находим нужные кнопки и попапы в разметке для карточек
+const cardButton = document.querySelector('.profile__add-button');
+const cardPopup = document.querySelector('.popup_type_new-card');
+
+// вызываем функцию
+cardButton.addEventListener('click', () => { 
+  // убираем предыдущие значения для формы при откртыии попапа
+  cardFormElement.reset();
+  openModal(cardPopup);
+});
+
+// находим нужные попап элементы для картинок в разметке
+const photoPopup = document.querySelector('.popup_type_image');
+const popupImage = photoPopup.querySelector('.popup__image');
+const popupCaption = photoPopup.querySelector('.popup__caption');
+
+const clickImage = (card) => {
+  // в зависисмости от выбранной картинки, добавляем инфо о ней
+  popupImage.src = card.link;
+  popupImage.alt = `Фотография места: ${card.name}`;
+  // подписываем название
+  popupCaption.textContent = card.name;
+  openModal(photoPopup); 
+};
+
+// ЗАКРЫВАЕМ ПОПАПЫ
+
+// находим нужные кнопки для закрытия
+const closeButtons = document.querySelectorAll('.popup__close');
+
+closeButtons.forEach( (button) => {
+    // находим нужный попап-родитель
+    const popup = button.closest('.popup');
+    // закрываем попап при нажатии на кнопку
+    button.addEventListener('click', () => closeModal(popup));  
+});
 
 // СОЗДАЕМ КАРТОЧКИ
 
@@ -34,83 +85,13 @@ const createAllCards = () =>  {
 }
 createAllCards();
 
-// ОТКРЫВАЕМ ПОПАПЫ
-
-// находим нужные кнопки и попапы в разметке для профиля
-const editButton = document.querySelector('.profile__edit-button');
-const editPopup = document.querySelector('.popup_type_edit');
-
-// вызываем функцию открытия попапа при нажатии
-editButton.addEventListener('click', () => { 
-  // добавляем значения для формы при откртыии попапа
-  nameInput.value = profileTitle.textContent; 
-  jobInput.value = profileDescription.textContent;
-  openModal(editPopup);
-});
-
-// находим нужные кнопки и попапы в разметке для карточек
-const cardButton = document.querySelector('.profile__add-button');
-const cardPopup = document.querySelector('.popup_type_new-card');
-
-// вызываем функцию
-cardButton.addEventListener('click', () => { 
-  // убираем предыдущие значения для формы при откртыии попапа
-  placeInput.value = "";
-  linkInput.value = "";
-  openModal(cardPopup);
-});
-
-// находим нужные попап элементы для картинок в разметке
-const photoPopup = document.querySelector('.popup_type_image');
-
-// используем делегирование событий и выбираем список мест
-document.querySelector('.places__list').addEventListener('click', (event) => {
-  if (event.target.classList.contains('card__image')) {
-      const card = {
-        name: event.target.closest('.card').querySelector('.card__title').textContent,
-        link: event.target.src
-      };
-      clickImage(card);
-      openModal(photoPopup); 
-  }
-});
-
-// ЗАКРЫВАЕМ ПОПАПЫ
-
-// находим нужные кнопки для закрытия
-const closeButtons = document.querySelectorAll('.popup__close');
-
-closeButtons.forEach( (button) => {
-    // находим нужный попап-родитель
-    const popup = button.closest('.popup');
-    // закрываем попап при нажатии на кнопку
-    button.addEventListener('click', () => closeModal(popup));  
-});
-
-// закрываем попап нажатием на оверлэй
-document.addEventListener('click', (event) => {
-    if (event.target.matches('.popup')) {
-        closeModal(event.target);
-    }
-});
-
-// закрываем попап при нажатии на esc
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-        const openedPopup = document.querySelector('.popup_is-opened');
-        if (openedPopup) {
-            closeModal(openedPopup);
-        }
-    }
-});
-
 // РЕДАКТИРУЕМ ПРОФИЛЬ
 
 // находим форму в DOM
-const formElement = editPopup.querySelector('.popup__form'); 
+const formEditProfile = document.forms['edit-profile'];
 // находим поля формы в DOM
-const nameInput = formElement.querySelector('.popup__input_type_name'); 
-const jobInput = formElement.querySelector('.popup__input_type_description'); 
+const nameInput = formEditProfile.querySelector('.popup__input_type_name'); 
+const jobInput = formEditProfile.querySelector('.popup__input_type_description'); 
 
 // выберем элементы, куда должны быть вставлены значения полей
 const profileTitle = document.querySelector('.profile__title'); 
@@ -118,20 +99,20 @@ const profileDescription = document.querySelector('.profile__description');
 
 
 // обработчик «отправки» формы, хотя пока она никуда отправляться не будет
-const handleFormSubmit = (evt) =>  {
+const submitEditProfileForm = (evt) =>  {
   // отменяем стандартную отправку формы
   evt.preventDefault(); 
   // получиим значение полей jobInput и nameInput из свойства value
-  let jobName = jobInput.value;
-  let personName = nameInput.value;
+  const jobName = jobInput.value;
+  const personName = nameInput.value;
   // вставим новые значения
   profileTitle.textContent = personName;
   profileDescription.textContent  = jobName;
-  closeModal(editPopup);
+  closeModal(popupEditProfile);
 }
 
 // прикрепляем обработчик к форме
-formElement.addEventListener('submit', handleFormSubmit);
+formEditProfile.addEventListener('submit', submitEditProfileForm);
 
 // ДОБАВЛЯЕМ КАРТОЧКИ
 
@@ -142,20 +123,22 @@ const placeInput = cardFormElement.querySelector('.popup__input_type_card-name')
 const linkInput = cardFormElement.querySelector('.popup__input_type_url'); 
 
 // обработчик «отправки» формы, хотя пока она никуда отправляться не будет
-const handleCardFormSubmit = (evt) => {
+const submitAddCardForm = (evt) => {
   // отменяем стандартную отправку формы
   evt.preventDefault(); 
   // получиим значение полей placeInput и linkInput из свойства value
-  let placeName = placeInput.value;
-  let linkName = linkInput.value;
-  // добавляем значения в массив
-  initialCards.unshift({
+  const placeName = placeInput.value;
+  const linkName = linkInput.value;
+
+  const card = {
     name: placeName,
     link: linkName,
-  });
-  createAllCards()
+  }
+
+  const addNewCard = createCard(card, deleteCard, likeCard, clickImage);
+  placesList.prepend(addNewCard);
   closeModal(cardPopup);
 }
 
 // прикрепляем обработчик к форме
-cardFormElement.addEventListener('submit', handleCardFormSubmit);
+cardFormElement.addEventListener('submit', submitAddCardForm);

@@ -1,21 +1,31 @@
 // openModal и closeModal, принимающие в качестве аргумента DOM-элемент модального окна, с которым нужно произвести действие
 
+// закрываем попап нажатием на оверлэй
+const closeByOverlay = (event) => {
+  if (event.target.matches('.popup')) {
+      closeModal(event.target);
+  }
+};
+
+// закрываем попап при нажатии на esc
+const closeByEsc = (event) => {
+  if (event.key === 'Escape') {
+      const openedPopup = document.querySelector('.popup_is-opened');
+      if (openedPopup) {
+          closeModal(openedPopup);
+      }
+  }
+};
+
 // СОЗДАНИЕ МОДАЛЬНОГО ОКНА 
 
 // открываем попап 
 export const openModal = (popupName) => {
-  // не работает при первом нажатии тут
-  // popupName.classList.add('popup_is-opened');
-  // popupName.classList.remove('popup_is-animated');
-  if (!popupName.classList.contains('popup_is-opened')) { 
-    // добавляем, чтобы анимация сработала при первом нажатии
-    popupName.classList.add('popup_is-animated'); 
+  // popupName.classList.add('popup_is-animated');
+  popupName.classList.add('popup_is-opened');
 
-    setTimeout(() => {
-      popupName.classList.add('popup_is-opened'); 
-      popupName.classList.remove('popup_is-animated');
-    }, 10);
-  }
+  popupName.addEventListener('click', closeByOverlay);
+  document.addEventListener('keydown', closeByEsc);
 };
 
 // УДАЛЕНИЕ МОДАЛЬНОГО ОКНА 
@@ -24,5 +34,8 @@ export const openModal = (popupName) => {
 export const closeModal = (popup) => {
   popup.classList.remove('popup_is-opened');
   popup.classList.add('popup_is-animated');
+
+  popup.removeEventListener('click', closeByOverlay);
+  document.removeEventListener('keydown', closeByEsc);
 }
 
