@@ -17,6 +17,11 @@ import avatar from '../images/avatar.jpg';
 // document.querySelector('.logo').src = logo;
 document.querySelector('.profile__image').style.backgroundImage = `url(${avatar})`;
 
+// АНИМИРУЕМ ПОПАПЫ 
+document.querySelectorAll('.popup').forEach(popup => {
+  popup.classList.add('popup_is-animated');
+});
+
 // ОТКРЫВАЕМ ПОПАПЫ
 
 // находим нужные кнопки и попапы в разметке для профиля

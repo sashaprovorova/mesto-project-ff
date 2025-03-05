@@ -21,7 +21,6 @@ const closeByEsc = (event) => {
 
 // открываем попап 
 export const openModal = (popupName) => {
-  // popupName.classList.add('popup_is-animated');
   popupName.classList.add('popup_is-opened');
 
   popupName.addEventListener('click', closeByOverlay);
@@ -30,10 +29,9 @@ export const openModal = (popupName) => {
 
 // УДАЛЕНИЕ МОДАЛЬНОГО ОКНА 
 
-// удаляем попап и анимируем
+// удаляем попап
 export const closeModal = (popup) => {
   popup.classList.remove('popup_is-opened');
-  popup.classList.add('popup_is-animated');
 
   popup.removeEventListener('click', closeByOverlay);
   document.removeEventListener('keydown', closeByEsc);
