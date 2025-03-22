@@ -5,10 +5,10 @@
 // ИМПОРТИРУЕМ МОДУЛИ
 
 import "../pages/index.css";
-import { initialCards } from "./cards.js";
 import { openModal, closeModal } from "../components/modal.js";
 import { createCard, deleteCard, likeCard } from "../components/card.js";
 import { enableValidation, clearValidation } from "./validity.js";
+import { getUserInfo, getCardsInfo } from "./api.js";
 
 // ПОДКЛЮЧАЕМ ЛОКАЛЬНЫЕ КАРТИНКИ
 
@@ -16,9 +16,8 @@ import { enableValidation, clearValidation } from "./validity.js";
 import avatar from "../images/avatar.jpg";
 
 // document.querySelector('.logo').src = logo;
-document.querySelector(
-  ".profile__image"
-).style.backgroundImage = `url(${avatar})`;
+const profileAvatar = document.querySelector(".profile__image");
+profileAvatar.style.backgroundImage = `url(${avatar})`;
 
 // АНИМИРУЕМ ПОПАПЫ
 document.querySelectorAll(".popup").forEach((popup) => {
@@ -84,18 +83,6 @@ closeButtons.forEach((button) => {
 
 // находим место под карточки
 const placesList = document.querySelector(".places__list");
-
-// пройтись по всему списку и создать каждую из карточек
-const createAllCards = () => {
-  // удаляем изначально заложенные карточки
-  placesList.innerHTML = "";
-  initialCards.forEach((card) => {
-    const createdCard = createCard(card, deleteCard, likeCard, clickImage);
-    // отображаем на странице
-    placesList.append(createdCard);
-  });
-};
-createAllCards();
 
 // РЕДАКТИРУЕМ ПРОФИЛЬ
 
@@ -172,3 +159,25 @@ const validationConfig = {
 
 // вызываем проверку всех форм
 enableValidation(validationConfig);
+
+// пройтись по всему списку и создать каждую из карточек
+const createAllCards = (cards) => {
+  // удаляем изначально заложенные карточки
+  placesList.innerHTML = "";
+  cards.forEach((card) => {
+    const createdCard = createCard(card, deleteCard, likeCard, clickImage);
+    // отображаем на странице
+    placesList.append(createdCard);
+  });
+};
+
+Promise.all([getUserInfo(), getCardsInfo()])
+  .then(([userData, cardData]) => {
+    profileTitle.textContent = userData.name;
+    profileDescription.textContent = userData.about;
+    profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
+    createAllCards(cardData);
+  })
+  .catch((err) => {
+    console.log(err);
+  });
