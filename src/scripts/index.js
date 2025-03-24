@@ -3,13 +3,20 @@
 import "../pages/index.css";
 import { openModal, closeModal } from "../components/modal.js";
 import { createCard, deleteCard, likeCard } from "../components/card.js";
-import { enableValidation, clearValidation } from "./validity.js";
+import {
+  enableValidation,
+  clearValidation,
+  showInputError,
+  toggleButtonState,
+} from "./validity.js";
+
 import {
   getUserInfo,
   getCardsInfo,
   updateUserInfo,
   postNewCard,
   updateUserAvatar,
+  isImageUrlValid,
 } from "./api.js";
 
 // ПОДКЛЮЧАЕМ ЛОКАЛЬНЫЕ КАРТИНКИ
@@ -37,7 +44,7 @@ buttonOpenEditProfilePopup.addEventListener("click", () => {
   // добавляем значения для формы при откртыии попапа
   nameInput.value = profileTitle.textContent;
   jobInput.value = profileDescription.textContent;
-  clearValidation(popupEditProfile, validationConfig);
+  clearValidation(formEditProfile, validationConfig);
   openModal(popupEditProfile);
 });
 
@@ -97,21 +104,37 @@ const jobInput = formEditProfile.querySelector(
 // выберем элементы, куда должны быть вставлены значения полей
 const profileTitle = document.querySelector(".profile__title");
 const profileDescription = document.querySelector(".profile__description");
+const submitProfile = formEditProfile.querySelector(".popup__button");
+
+// новое имя и описание
+// const newName = "Jack Sparrow";
+// const newJob = "Captain of the Black Pearl, pirate";
 
 // обработчик «отправки» формы, хотя пока она никуда отправляться не будет
 const submitEditProfileForm = (evt) => {
   // отменяем стандартную отправку формы
   evt.preventDefault();
-  // получиим значение полей jobInput и nameInput из свойства value
-  const jobName = jobInput.value;
-  const personName = nameInput.value;
-  // вставим новые значения
-  profileTitle.textContent = personName;
-  profileDescription.textContent = jobName;
-  closeModal(popupEditProfile);
-};
 
-// прикрепляем обработчик к форме
+  renderLoading(true, submitProfile);
+  // получиим значение полей jobInput и nameInput из свойства value
+  const personName = nameInput.value;
+  const jobName = jobInput.value;
+
+  // вставим новые значения
+  updateUserInfo(personName, jobName)
+    .then((userData) => {
+      profileTitle.textContent = userData.name;
+      profileDescription.textContent = userData.about;
+      closeModal(popupEditProfile);
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    .finally(() => {
+      renderLoading(false, submitProfile);
+    });
+};
+// // прикрепляем обработчик к форме
 formEditProfile.addEventListener("submit", submitEditProfileForm);
 
 // ДОБАВЛЯЕМ КАРТОЧКИ
@@ -123,27 +146,52 @@ const placeInput = cardFormElement.querySelector(
   ".popup__input_type_card-name"
 );
 const linkInput = cardFormElement.querySelector(".popup__input_type_url");
+const submitCard = cardFormElement.querySelector(".popup__button");
 
 // обработчик «отправки» формы, хотя пока она никуда отправляться не будет
 const submitAddCardForm = (evt) => {
   // отменяем стандартную отправку формы
   evt.preventDefault();
+  renderLoading(true, submitCard);
   // получиим значение полей placeInput и linkInput из свойства value
   const placeName = placeInput.value;
   const linkName = linkInput.value;
 
-  const card = {
-    name: placeName,
-    link: linkName,
-  };
+  // const card = {
+  //   name: placeName,
+  //   link: linkName,
+  // };
+  postNewCard(placeName, linkName)
+    .then((placeData) => {
+      const createdCard = createCard(
+        placeData,
+        deleteCard,
+        likeCard,
+        clickImage,
+        userId
+      );
+      placesList.prepend(createdCard);
+      closeModal(cardPopup);
+      // запоминаем выложенную карточку
+      // localStorage.setItem("cardPosted", "true");
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    .finally(() => {
+      renderLoading(false, submitCard);
+    });
 
-  const addNewCard = createCard(card, deleteCard, likeCard, clickImage, userId);
-  placesList.prepend(addNewCard);
-  closeModal(cardPopup);
+  // const addNewCard = createCard(card, deleteCard, likeCard, clickImage, userId);
 };
 
 // прикрепляем обработчик к форме
 cardFormElement.addEventListener("submit", submitAddCardForm);
+
+//  новое место и ссылка на него
+// const newPlace = "Казань";
+// const newLink =
+//   "https://images.unsplash.com/photo-1628066068625-015ea7bcc21a?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8a2F6YW58ZW58MHx8MHx8fDA%3D";
 
 // ПРОВЕРКА ФОРМ
 
@@ -198,21 +246,13 @@ Promise.all([getUserInfo(), getCardsInfo()])
     console.log(err);
   });
 
-//  новое имя и описание
-const newName = "Jack Sparrow";
-const newJob = "Captain of the Black Pearl, pirate";
-// обновляем данные о пользователе на сервере
-updateUserInfo(newName, newJob).catch((err) => {
-  console.log(err);
-});
-
-// document.querySelector('.logo').src = logo;
+// находим ДОМ элементы аватарки
 const profileAvatar = document.querySelector(".profile__image");
 profileAvatar.style.backgroundImage = `url(${avatar})`;
 const editAvatar = document.querySelector(".profile__image-overlay");
-
 const avatarPopup = document.querySelector(".popup_type_avatar");
 
+// вызываем попап
 editAvatar.addEventListener("click", () => {
   openModal(avatarPopup);
 });
@@ -220,49 +260,54 @@ editAvatar.addEventListener("click", () => {
 // const newAvatar =
 //   "https://images.unsplash.com/photo-1606071548917-78ed9809141f?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c3BhcnJvd3xlbnwwfHwwfHx8MA%3D%3D";
 
-// находим форму в DOM
+// находим форму для смены аватара в DOM
 const formEditAvatar = document.forms["edit-avatar"];
 // находим поля формы в DOM
 const avatarInput = formEditAvatar.querySelector(".popup__input_type_url");
+const submitAvatar = formEditAvatar.querySelector(".popup__button");
 
+// при отправке формы
 formEditAvatar.addEventListener("submit", (evt) => {
   evt.preventDefault();
+  renderLoading(true, submitAvatar);
   const newAvatar = avatarInput.value;
-  updateUserAvatar(newAvatar)
-    .then((userData) => {
-      profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
-      closeModal(avatarPopup);
-      formEditAvatar.reset();
+  // проверяем на валидность ссылки на именно на картинку
+  isImageUrlValid(newAvatar)
+    .then((isValid) => {
+      if (isValid) {
+        // меняем картинку
+        updateUserAvatar(newAvatar)
+          .then((userData) => {
+            profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
+            closeModal(avatarPopup);
+            formEditAvatar.reset();
+          })
+          .catch((err) => {
+            console.log(err);
+          })
+          .finally(() => {
+            renderLoading(false, submitAvatar);
+          });
+      }
     })
     .catch((err) => {
       console.log(err);
+
+      showInputError(
+        formEditAvatar,
+        avatarInput,
+        avatarInput.dataset.errorMessage,
+        validationConfig
+      );
+      formEditAvatar.reset();
+      renderLoading(false, submitAvatar);
     });
 });
 
-//  новое место и ссылка на него
-const newPlace = "Казань";
-const newLink =
-  "https://images.unsplash.com/photo-1628066068625-015ea7bcc21a?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8a2F6YW58ZW58MHx8MHx8fDA%3D";
-
-// запоминаем уже выложенную карточку
-const cardPosted = localStorage.getItem("cardPosted");
-// если карточка не опубликована еще
-if (!cardPosted) {
-  // отправляем запрос на сервер опубликовать
-  postNewCard(newPlace, newLink)
-    .then((placeData) => {
-      const createdCard = createCard(
-        placeData,
-        deleteCard,
-        likeCard,
-        clickImage,
-        userId
-      );
-      placesList.prepend(createdCard);
-      // запоминаем выложенную карточку
-      localStorage.setItem("cardPosted", "true");
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-}
+const renderLoading = (isLoading, buttonElement) => {
+  if (isLoading) {
+    buttonElement.textContent = "Сохранение...";
+  } else {
+    buttonElement.textContent = "Сохранить";
+  }
+};

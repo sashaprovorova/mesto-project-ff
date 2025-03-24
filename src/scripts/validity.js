@@ -1,7 +1,7 @@
 // ПРОВЕРКА ФОРМ
 
 // добавляем класс с ошибкой
-const showInputError = (
+export const showInputError = (
   formElement,
   inputElement,
   errorMessage,
@@ -26,7 +26,11 @@ const hideInputError = (formElement, inputElement, validationConfig) => {
 };
 
 // проверяем валидность поля
-const checkInputValidity = (formElement, inputElement, validationConfig) => {
+export const checkInputValidity = (
+  formElement,
+  inputElement,
+  validationConfig
+) => {
   if (inputElement.validity.patternMismatch) {
     inputElement.setCustomValidity(inputElement.dataset.errorMessage);
   } else {
@@ -47,20 +51,26 @@ const checkInputValidity = (formElement, inputElement, validationConfig) => {
 };
 
 // проверяем если хотя бы одно из полей не валидно
-const hasInvalidInput = (inputList) => {
+export const hasInvalidInput = (inputList) => {
   return inputList.some((inputElement) => {
     return !inputElement.validity.valid;
   });
 };
 
 // модифицируем кнопку в зависимости от состояния полей
-const toggleButtonState = (inputList, buttonElement, validationConfig) => {
+export const toggleButtonState = (
+  inputList,
+  buttonElement,
+  validationConfig
+) => {
   if (hasInvalidInput(inputList)) {
     // делаем кнопку недоступной при ошибках
     buttonElement.classList.add(validationConfig.inactiveButtonClass);
+    buttonElement.setAttribute("disabled", true);
   } else {
     // делаем кнопку доступной при отсутствии ошибок
     buttonElement.classList.remove(validationConfig.inactiveButtonClass);
+    buttonElement.removeAttribute("disabled");
   }
 };
 
@@ -77,7 +87,7 @@ const setEventListeners = (formElement, validationConfig) => {
   toggleButtonState(inputList, buttonElement, validationConfig);
   inputList.forEach((inputElement) => {
     // каждому полю добавим обработчик события
-    inputElement.addEventListener("input", function () {
+    inputElement.addEventListener("input", () => {
       checkInputValidity(formElement, inputElement, validationConfig);
       // проверяем состояние кнопки при изменений полей
       toggleButtonState(inputList, buttonElement, validationConfig);

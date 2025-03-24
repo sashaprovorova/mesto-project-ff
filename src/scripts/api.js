@@ -117,3 +117,16 @@ export const updateUserAvatar = (avatar) => {
     return Promise.reject(`Ошибка: ${res.status}`);
   });
 };
+
+// проверяем введена ли ссылка на картинку
+export const isImageUrlValid = (url) => {
+  return fetch(url, {
+    method: "HEAD",
+  }).then((res) => {
+    if (res.ok) {
+      const contentType = res.headers.get("Content-Type");
+      return contentType && contentType.startsWith("image/");
+    }
+    return Promise.reject(`Ошибка: ${res.status}`);
+  });
+};

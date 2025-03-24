@@ -57,7 +57,7 @@
               placeholder="Имя"
               minlength="2"
               maxlength="40"
-              pattern="^[a-zA-Zа-яёА-ЯË\s-]+$"
+              pattern="^[a-zA-Zа-яёА-ЯË\s\-]+$"
               data-error-message="Разрешены только латинские и кириллические буквы, знаки дефиса и пробелы"
               required
             />
@@ -72,7 +72,7 @@
               placeholder="Занятие"
               minlength="2"
               maxlength="200"
-              pattern="^[a-zA-Zа-яёА-ЯË\s-]+$"
+              pattern="^[a-zA-Zа-яёА-ЯË\s\-]+$"
               data-error-message="Разрешены только латинские и кириллические буквы, знаки дефиса и пробелы"
               required
             />
@@ -96,7 +96,7 @@
               placeholder="Название"
               minlength="2"
               maxlength="30"
-              pattern="^[a-zA-Zа-яёА-ЯË\s-]+$"
+              pattern="^[a-zA-Zа-яёА-ЯË\s\-]+$"
               data-error-message="Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы"
               required
             />
@@ -133,6 +133,7 @@
               name="link"
               class="popup__input popup__input_type_url"
               id="link"
+              data-error-message="Разрешена только ссылка на картину"
               placeholder="Ссылка на картинку"
               required
             />
