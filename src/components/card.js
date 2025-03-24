@@ -1,4 +1,4 @@
-// Функции для работы с карточками проекта Mesto вынесите в файл card.js, из него должна экспортироваться функция createCard, которую вы создали раньше (у вас она может называться по-другому). Функции, обрабатывающие события лайка и удаления карточки, также должны находиться в этом файле и экспортироваться из него.
+import { deletePostedCard } from "../scripts/api";
 
 // СОЗДАНИЕ КАРТОЧЕК
 
@@ -11,7 +11,7 @@ const getTemplate = () => {
 };
 
 //  функция создания карточки
-export const createCard = (card, deleteCard, likeCard, clickImage) => {
+export const createCard = (card, deleteCard, likeCard, clickImage, userId) => {
   const cardElement = getTemplate();
 
   const cardImage = cardElement.querySelector(".card__image");
@@ -20,14 +20,30 @@ export const createCard = (card, deleteCard, likeCard, clickImage) => {
   cardImage.src = card.link;
   cardImage.alt = `Фотография места: ${card.name}`;
 
-  // удаляем при нажатии
-  cardElement
-    .querySelector(".card__delete-button")
-    .addEventListener("click", () => deleteCard(cardElement));
+  const deleteButton = cardElement.querySelector(".card__delete-button");
+  // удаляем при нажатии если пользовать подходит по айди
+  if (card.owner._id === userId) {
+    deleteButton.addEventListener("click", () =>
+      deleteCard(cardElement, card._id)
+    );
+  } else {
+    // убираем копку удалить если фотография выложена другим пользователем
+    deleteButton.remove();
+  }
 
-  // лайкаем при нажатии
+  // отображаем количество поставленных лайков
+  const likeCountElement = cardElement.querySelector(".card__like-count");
+  likeCountElement.textContent = card.likes.length;
+
   const likeButton = cardElement.querySelector(".card__like-button");
-  likeButton.addEventListener("click", () => likeCard(likeButton));
+  // если уже пролайкано до этого пользователем, то отображаем активный статус
+  if (card.likes.includes(userId)) {
+    likeButton.classList.add("card__like-button_is-active");
+  }
+  // лайкаем при нажатии
+  likeButton.addEventListener("click", () =>
+    likeCard(likeButton, card, likeCountElement, userId)
+  );
 
   // подготавливаем попап
   cardImage.addEventListener("click", () => {
@@ -41,12 +57,29 @@ export const createCard = (card, deleteCard, likeCard, clickImage) => {
 // УДАЛЕНИЕ КАРТОЧЕК
 
 // функция-колбэк удаления карточек
-export const deleteCard = (cardElement) => {
-  cardElement.remove();
+export const deleteCard = (cardElement, cardId) => {
+  // удаляем с сервера
+  deletePostedCard(cardId)
+    .then(() => {
+      cardElement.remove();
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 };
 
 // СОБЫТИЯ ЛАЙКА
 
-export const likeCard = (likeButton) => {
+export const likeCard = (likeButton, card, likeCountElement, userId) => {
+  // добавляем или убираем обозначение лайка
   likeButton.classList.toggle("card__like-button_is-active");
+  // если поставлен лайк, то добавляем в список пройлайковших
+  if (likeButton.classList.contains("card__like-button_is-active")) {
+    card.likes.push(userId);
+  } else {
+    // убираем из списка если лайк убран
+    card.likes = card.likes.filter((id) => id !== userId);
+  }
+  // отображаем новое количество лайков
+  likeCountElement.textContent = card.likes.length;
 };

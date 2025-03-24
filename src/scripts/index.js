@@ -1,14 +1,15 @@
-// объявления и инициализация глобальных констант и переменных с DOM-элементами страницы
-// обработчики событий (при открытии и закрытии попапов; при отправке форм; обработчик, открывающий попап при клике по изображению карточки);
-// вызовы других функций, подключённых из созданных модулей, которым нужно будет передавать объявленные здесь переменные и обработчики.
-
 // ИМПОРТИРУЕМ МОДУЛИ
 
 import "../pages/index.css";
 import { openModal, closeModal } from "../components/modal.js";
 import { createCard, deleteCard, likeCard } from "../components/card.js";
 import { enableValidation, clearValidation } from "./validity.js";
-import { getUserInfo, getCardsInfo } from "./api.js";
+import {
+  getUserInfo,
+  getCardsInfo,
+  updateUserInfo,
+  postNewCard,
+} from "./api.js";
 
 // ПОДКЛЮЧАЕМ ЛОКАЛЬНЫЕ КАРТИНКИ
 
@@ -18,6 +19,8 @@ import avatar from "../images/avatar.jpg";
 // document.querySelector('.logo').src = logo;
 const profileAvatar = document.querySelector(".profile__image");
 profileAvatar.style.backgroundImage = `url(${avatar})`;
+
+let userId = "";
 
 // АНИМИРУЕМ ПОПАПЫ
 document.querySelectorAll(".popup").forEach((popup) => {
@@ -137,7 +140,7 @@ const submitAddCardForm = (evt) => {
     link: linkName,
   };
 
-  const addNewCard = createCard(card, deleteCard, likeCard, clickImage);
+  const addNewCard = createCard(card, deleteCard, likeCard, clickImage, userId);
   placesList.prepend(addNewCard);
   closeModal(cardPopup);
 };
@@ -160,24 +163,76 @@ const validationConfig = {
 // вызываем проверку всех форм
 enableValidation(validationConfig);
 
-// пройтись по всему списку и создать каждую из карточек
-const createAllCards = (cards) => {
+// ИСПОЛЬЗУЕМ API
+
+// пройдем по всему списку и создать каждую из карточек
+const createAllCards = (cards, userId) => {
   // удаляем изначально заложенные карточки
-  placesList.innerHTML = "";
+  while (placesList.firstChild) {
+    placesList.removeChild(placesList.firstChild);
+  }
+  // проходимся по всем имеющимся карточкам и создаем
   cards.forEach((card) => {
-    const createdCard = createCard(card, deleteCard, likeCard, clickImage);
+    const createdCard = createCard(
+      card,
+      deleteCard,
+      likeCard,
+      clickImage,
+      userId
+    );
     // отображаем на странице
-    placesList.append(createdCard);
+    placesList.appendChild(createdCard);
   });
 };
 
+// запрашиваем данные с сервера
 Promise.all([getUserInfo(), getCardsInfo()])
   .then(([userData, cardData]) => {
+    // сохраняем айди пользователя отдельно
+    userId = userData._id;
+    // отображаем всю остальную информацию о пользователе
     profileTitle.textContent = userData.name;
     profileDescription.textContent = userData.about;
     profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
-    createAllCards(cardData);
+    // передаем полученные карточки
+    createAllCards(cardData, userId);
   })
   .catch((err) => {
     console.log(err);
   });
+
+//  новое имя и описание
+const newName = "Jack Sparrow";
+const newJob = "Captain of the Black Pearl, pirate";
+// обновляем данные о пользователе на сервере
+updateUserInfo(newName, newJob).catch((err) => {
+  console.log(err);
+});
+
+//  новое место и ссылка на него
+const newPlace = "Казань";
+const newLink =
+  "https://images.unsplash.com/photo-1628066068625-015ea7bcc21a?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8a2F6YW58ZW58MHx8MHx8fDA%3D";
+
+// запоминаем уже выложенную карточку
+const cardPosted = localStorage.getItem("cardPosted");
+// если карточка не опубликована еще
+if (!cardPosted) {
+  // отправляем запрос на сервер опубликовать
+  postNewCard(newPlace, newLink)
+    .then((placeData) => {
+      const createdCard = createCard(
+        placeData,
+        deleteCard,
+        likeCard,
+        clickImage,
+        userId
+      );
+      placesList.prepend(createdCard);
+      // запоминаем выложенную карточку
+      localStorage.setItem("cardPosted", "true");
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
