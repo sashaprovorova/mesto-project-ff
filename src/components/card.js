@@ -1,4 +1,8 @@
-import { deletePostedCard } from "../scripts/api";
+import {
+  deletePostedCard,
+  addLikeToCard,
+  deleteLikeFromCard,
+} from "../scripts/api";
 
 // СОЗДАНИЕ КАРТОЧЕК
 
@@ -37,12 +41,12 @@ export const createCard = (card, deleteCard, likeCard, clickImage, userId) => {
 
   const likeButton = cardElement.querySelector(".card__like-button");
   // если уже пролайкано до этого пользователем, то отображаем активный статус
-  if (card.likes.includes(userId)) {
+  if (card.likes.some((like) => like._id === userId)) {
     likeButton.classList.add("card__like-button_is-active");
   }
   // лайкаем при нажатии
   likeButton.addEventListener("click", () =>
-    likeCard(likeButton, card, likeCountElement, userId)
+    likeCard(likeButton, card, likeCountElement)
   );
 
   // подготавливаем попап
@@ -70,16 +74,28 @@ export const deleteCard = (cardElement, cardId) => {
 
 // СОБЫТИЯ ЛАЙКА
 
-export const likeCard = (likeButton, card, likeCountElement, userId) => {
+export const likeCard = (likeButton, card, likeCountElement) => {
   // добавляем или убираем обозначение лайка
   likeButton.classList.toggle("card__like-button_is-active");
   // если поставлен лайк, то добавляем в список пройлайковших
   if (likeButton.classList.contains("card__like-button_is-active")) {
-    card.likes.push(userId);
+    addLikeToCard(card._id)
+      .then((updatedCard) => {
+        // отображаем новое количество лайков
+        likeCountElement.textContent = updatedCard.likes.length;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   } else {
     // убираем из списка если лайк убран
-    card.likes = card.likes.filter((id) => id !== userId);
+    deleteLikeFromCard(card._id)
+      .then((updatedCard) => {
+        // отображаем новое количество лайков
+        likeCountElement.textContent = updatedCard.likes.length;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
-  // отображаем новое количество лайков
-  likeCountElement.textContent = card.likes.length;
 };

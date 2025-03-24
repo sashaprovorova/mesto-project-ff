@@ -9,16 +9,13 @@ import {
   getCardsInfo,
   updateUserInfo,
   postNewCard,
+  updateUserAvatar,
 } from "./api.js";
 
 // ПОДКЛЮЧАЕМ ЛОКАЛЬНЫЕ КАРТИНКИ
 
 // import logo from '../images/logo.svg';
 import avatar from "../images/avatar.jpg";
-
-// document.querySelector('.logo').src = logo;
-const profileAvatar = document.querySelector(".profile__image");
-profileAvatar.style.backgroundImage = `url(${avatar})`;
 
 let userId = "";
 
@@ -207,6 +204,39 @@ const newJob = "Captain of the Black Pearl, pirate";
 // обновляем данные о пользователе на сервере
 updateUserInfo(newName, newJob).catch((err) => {
   console.log(err);
+});
+
+// document.querySelector('.logo').src = logo;
+const profileAvatar = document.querySelector(".profile__image");
+profileAvatar.style.backgroundImage = `url(${avatar})`;
+const editAvatar = document.querySelector(".profile__image-overlay");
+
+const avatarPopup = document.querySelector(".popup_type_avatar");
+
+editAvatar.addEventListener("click", () => {
+  openModal(avatarPopup);
+});
+
+// const newAvatar =
+//   "https://images.unsplash.com/photo-1606071548917-78ed9809141f?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c3BhcnJvd3xlbnwwfHwwfHx8MA%3D%3D";
+
+// находим форму в DOM
+const formEditAvatar = document.forms["edit-avatar"];
+// находим поля формы в DOM
+const avatarInput = formEditAvatar.querySelector(".popup__input_type_url");
+
+formEditAvatar.addEventListener("submit", (evt) => {
+  evt.preventDefault();
+  const newAvatar = avatarInput.value;
+  updateUserAvatar(newAvatar)
+    .then((userData) => {
+      profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
+      closeModal(avatarPopup);
+      formEditAvatar.reset();
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 //  новое место и ссылка на него
