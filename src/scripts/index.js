@@ -3,11 +3,8 @@
 import "../pages/index.css";
 import { openModal, closeModal } from "../components/modal.js";
 import { createCard, deleteCard, likeCard } from "../components/card.js";
-import {
-  enableValidation,
-  clearValidation,
-  showInputError,
-} from "./validity.js";
+import { enableValidation, clearValidation } from "./validity.js";
+import { renderLoading } from "./utils.js";
 
 import {
   getUserInfo,
@@ -33,16 +30,6 @@ document.querySelectorAll(".popup").forEach((popup) => {
   popup.classList.add("popup_is-animated");
 });
 
-//  НА СЛУЧАЙ МЕДЛЕННОЙ ЗАГРУЗКИ
-
-const renderLoading = (isLoading, buttonElement) => {
-  if (isLoading) {
-    buttonElement.textContent = "Сохранение...";
-  } else {
-    buttonElement.textContent = "Сохранить";
-  }
-};
-
 // ОТКРЫВАЕМ ПОПАПЫ
 
 // находим нужные кнопки и попапы в разметке для профиля
@@ -67,8 +54,6 @@ const cardPopup = document.querySelector(".popup_type_new-card");
 // вызываем функцию
 cardButton.addEventListener("click", () => {
   // убираем предыдущие значения для формы при откртыии попапа
-  cardFormElement.reset();
-  clearValidation(cardPopup, validationConfig);
   openModal(cardPopup);
 });
 
@@ -178,11 +163,14 @@ const submitAddCardForm = (evt) => {
         deleteCard,
         likeCard,
         clickImage,
-        userId
+        userId,
+        openConfirmPopup
       );
       // добавляем в список и закрываем попап
       placesList.prepend(createdCard);
       closeModal(cardPopup);
+      cardFormElement.reset();
+      clearValidation(cardPopup, validationConfig);
     })
     .catch((err) => {
       console.log(err);
@@ -194,11 +182,6 @@ const submitAddCardForm = (evt) => {
 
 // прикрепляем обработчик к форме
 cardFormElement.addEventListener("submit", submitAddCardForm);
-
-//  новое место и ссылка на него
-// const newPlace = "Казань";
-// const newLink =
-//   "https://images.unsplash.com/photo-1628066068625-015ea7bcc21a?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8a2F6YW58ZW58MHx8MHx8fDA%3D";
 
 // ПРОВЕРКА ФОРМ
 
@@ -230,7 +213,8 @@ const createAllCards = (cards, userId) => {
       deleteCard,
       likeCard,
       clickImage,
-      userId
+      userId,
+      openConfirmPopup
     );
     // отображаем на странице
     placesList.appendChild(createdCard);
@@ -263,19 +247,16 @@ profileAvatar.style.backgroundImage = `url(${avatar})`;
 const editAvatar = document.querySelector(".profile__image-overlay");
 const avatarPopup = document.querySelector(".popup_type_avatar");
 
-// вызываем попап
-editAvatar.addEventListener("click", () => {
-  openModal(avatarPopup);
-});
-
-// const newAvatar =
-//   "https://images.unsplash.com/photo-1606071548917-78ed9809141f?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c3BhcnJvd3xlbnwwfHwwfHx8MA%3D%3D";
-
 // находим форму для смены аватара в DOM
 const formEditAvatar = document.forms["edit-avatar"];
 // находим поля формы в DOM
 const avatarInput = formEditAvatar.querySelector(".popup__input_type_url");
 const submitAvatar = formEditAvatar.querySelector(".popup__button");
+
+// вызываем попап
+editAvatar.addEventListener("click", () => {
+  openModal(avatarPopup);
+});
 
 // при отправке формы
 formEditAvatar.addEventListener("submit", (evt) => {
@@ -292,6 +273,7 @@ formEditAvatar.addEventListener("submit", (evt) => {
             profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
             closeModal(avatarPopup);
             formEditAvatar.reset();
+            clearValidation(formEditAvatar, validationConfig);
           })
           .catch((err) => {
             console.log(err);
@@ -303,15 +285,6 @@ formEditAvatar.addEventListener("submit", (evt) => {
     })
     .catch((err) => {
       console.log(err);
-      // если ссылка не на картинку, то показываем кастомную ошибку
-      showInputError(
-        formEditAvatar,
-        avatarInput,
-        avatarInput.dataset.errorMessage,
-        validationConfig
-      );
-      formEditAvatar.reset();
-      renderLoading(false, submitAvatar);
     });
 });
 
@@ -322,7 +295,7 @@ let handleConfirm;
 const confirmPopup = document.querySelector(".popup_type_confirmation");
 const confirmForm = confirmPopup.querySelector(".popup__form");
 
-export const openConfirmPopup = (deleteOnConfirm) => {
+const openConfirmPopup = (deleteOnConfirm) => {
   // запоминаем переданную функцию
   handleConfirm = deleteOnConfirm;
   // открываем пока другой попап

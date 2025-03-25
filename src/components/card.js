@@ -3,7 +3,6 @@ import {
   addLikeToCard,
   deleteLikeFromCard,
 } from "../scripts/api";
-import { openConfirmPopup } from "../scripts/index";
 
 // СОЗДАНИЕ КАРТОЧЕК
 
@@ -16,7 +15,14 @@ const getTemplate = () => {
 };
 
 //  функция создания карточки
-export const createCard = (card, deleteCard, likeCard, clickImage, userId) => {
+export const createCard = (
+  card,
+  deleteCard,
+  likeCard,
+  clickImage,
+  userId,
+  openConfirmPopup
+) => {
   // находим элементы
   const cardElement = getTemplate();
   const cardImage = cardElement.querySelector(".card__image");
