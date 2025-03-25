@@ -78,6 +78,7 @@ export const deletePostedCard = (cardId) => {
   });
 };
 
+// добавляем лайк на сервере
 export const addLikeToCard = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: "PUT",
@@ -90,6 +91,7 @@ export const addLikeToCard = (cardId) => {
   });
 };
 
+// убираем лайк на сервере
 export const deleteLikeFromCard = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: "DELETE",
@@ -118,7 +120,7 @@ export const updateUserAvatar = (avatar) => {
   });
 };
 
-// проверяем введена ли ссылка на картинку
+// проверяем введена ли ссылка именно на картинку
 export const isImageUrlValid = (url) => {
   return fetch(url, {
     method: "HEAD",

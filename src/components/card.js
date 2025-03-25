@@ -3,6 +3,7 @@ import {
   addLikeToCard,
   deleteLikeFromCard,
 } from "../scripts/api";
+import { openConfirmPopup } from "../scripts/index";
 
 // СОЗДАНИЕ КАРТОЧЕК
 
@@ -16,19 +17,21 @@ const getTemplate = () => {
 
 //  функция создания карточки
 export const createCard = (card, deleteCard, likeCard, clickImage, userId) => {
+  // находим элементы
   const cardElement = getTemplate();
-
   const cardImage = cardElement.querySelector(".card__image");
-  // наполняем содержимым
+  // наполняем их содержимым
   cardElement.querySelector(".card__title").textContent = card.name;
   cardImage.src = card.link;
   cardImage.alt = `Фотография места: ${card.name}`;
 
+  // находим кнопку удалить
   const deleteButton = cardElement.querySelector(".card__delete-button");
   // удаляем при нажатии если пользовать подходит по айди
   if (card.owner._id === userId) {
     deleteButton.addEventListener("click", () =>
-      deleteCard(cardElement, card._id)
+      // вызываем попап подтверждение и передаем функции
+      openConfirmPopup(() => deleteCard(cardElement, card._id))
     );
   } else {
     // убираем копку удалить если фотография выложена другим пользователем
@@ -39,6 +42,7 @@ export const createCard = (card, deleteCard, likeCard, clickImage, userId) => {
   const likeCountElement = cardElement.querySelector(".card__like-count");
   likeCountElement.textContent = card.likes.length;
 
+  // находим кнопку лайка
   const likeButton = cardElement.querySelector(".card__like-button");
   // если уже пролайкано до этого пользователем, то отображаем активный статус
   if (card.likes.some((like) => like._id === userId)) {

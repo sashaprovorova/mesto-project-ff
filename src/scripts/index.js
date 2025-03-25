@@ -7,7 +7,6 @@ import {
   enableValidation,
   clearValidation,
   showInputError,
-  toggleButtonState,
 } from "./validity.js";
 
 import {
@@ -24,12 +23,25 @@ import {
 // import logo from '../images/logo.svg';
 import avatar from "../images/avatar.jpg";
 
+// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+
 let userId = "";
 
 // АНИМИРУЕМ ПОПАПЫ
+
 document.querySelectorAll(".popup").forEach((popup) => {
   popup.classList.add("popup_is-animated");
 });
+
+//  НА СЛУЧАЙ МЕДЛЕННОЙ ЗАГРУЗКИ
+
+const renderLoading = (isLoading, buttonElement) => {
+  if (isLoading) {
+    buttonElement.textContent = "Сохранение...";
+  } else {
+    buttonElement.textContent = "Сохранить";
+  }
+};
 
 // ОТКРЫВАЕМ ПОПАПЫ
 
@@ -86,11 +98,6 @@ closeButtons.forEach((button) => {
   button.addEventListener("click", () => closeModal(popup));
 });
 
-// СОЗДАЕМ КАРТОЧКИ
-
-// находим место под карточки
-const placesList = document.querySelector(".places__list");
-
 // РЕДАКТИРУЕМ ПРОФИЛЬ
 
 // находим форму в DOM
@@ -110,17 +117,16 @@ const submitProfile = formEditProfile.querySelector(".popup__button");
 // const newName = "Jack Sparrow";
 // const newJob = "Captain of the Black Pearl, pirate";
 
-// обработчик «отправки» формы, хотя пока она никуда отправляться не будет
 const submitEditProfileForm = (evt) => {
   // отменяем стандартную отправку формы
   evt.preventDefault();
 
   renderLoading(true, submitProfile);
-  // получиим значение полей jobInput и nameInput из свойства value
+  // получаем значение полей jobInput и nameInput из свойства value
   const personName = nameInput.value;
   const jobName = jobInput.value;
 
-  // вставим новые значения
+  // вставим новые значения, отправив на сервер
   updateUserInfo(personName, jobName)
     .then((userData) => {
       profileTitle.textContent = userData.name;
@@ -134,8 +140,14 @@ const submitEditProfileForm = (evt) => {
       renderLoading(false, submitProfile);
     });
 };
+
 // // прикрепляем обработчик к форме
 formEditProfile.addEventListener("submit", submitEditProfileForm);
+
+// СОЗДАЕМ КАРТОЧКИ
+
+// находим место под карточки
+const placesList = document.querySelector(".places__list");
 
 // ДОБАВЛЯЕМ КАРТОЧКИ
 
@@ -146,9 +158,9 @@ const placeInput = cardFormElement.querySelector(
   ".popup__input_type_card-name"
 );
 const linkInput = cardFormElement.querySelector(".popup__input_type_url");
+// находим кнопку
 const submitCard = cardFormElement.querySelector(".popup__button");
 
-// обработчик «отправки» формы, хотя пока она никуда отправляться не будет
 const submitAddCardForm = (evt) => {
   // отменяем стандартную отправку формы
   evt.preventDefault();
@@ -157,12 +169,10 @@ const submitAddCardForm = (evt) => {
   const placeName = placeInput.value;
   const linkName = linkInput.value;
 
-  // const card = {
-  //   name: placeName,
-  //   link: linkName,
-  // };
+  // отправляем новую карточку на сервер
   postNewCard(placeName, linkName)
     .then((placeData) => {
+      // создаем новую карточку
       const createdCard = createCard(
         placeData,
         deleteCard,
@@ -170,10 +180,9 @@ const submitAddCardForm = (evt) => {
         clickImage,
         userId
       );
+      // добавляем в список и закрываем попап
       placesList.prepend(createdCard);
       closeModal(cardPopup);
-      // запоминаем выложенную карточку
-      // localStorage.setItem("cardPosted", "true");
     })
     .catch((err) => {
       console.log(err);
@@ -181,8 +190,6 @@ const submitAddCardForm = (evt) => {
     .finally(() => {
       renderLoading(false, submitCard);
     });
-
-  // const addNewCard = createCard(card, deleteCard, likeCard, clickImage, userId);
 };
 
 // прикрепляем обработчик к форме
@@ -208,7 +215,7 @@ const validationConfig = {
 // вызываем проверку всех форм
 enableValidation(validationConfig);
 
-// ИСПОЛЬЗУЕМ API
+// СОЗДАЕМ ЗАГРУЖЕННЫЕ С СЕРВЕРА КАРТОЧКИ
 
 // пройдем по всему списку и создать каждую из карточек
 const createAllCards = (cards, userId) => {
@@ -230,6 +237,8 @@ const createAllCards = (cards, userId) => {
   });
 };
 
+// ЗАПРАШИВАЕМ КАРТОЧКИ И САМОГО ПОЛЬЗОВАТЕЛЯ
+
 // запрашиваем данные с сервера
 Promise.all([getUserInfo(), getCardsInfo()])
   .then(([userData, cardData]) => {
@@ -239,12 +248,14 @@ Promise.all([getUserInfo(), getCardsInfo()])
     profileTitle.textContent = userData.name;
     profileDescription.textContent = userData.about;
     profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
-    // передаем полученные карточки
+    // передаем полученные карточки для отрисовки
     createAllCards(cardData, userId);
   })
   .catch((err) => {
     console.log(err);
   });
+
+//  МЕНЯЕМ АВАТАРКУ
 
 // находим ДОМ элементы аватарки
 const profileAvatar = document.querySelector(".profile__image");
@@ -292,7 +303,7 @@ formEditAvatar.addEventListener("submit", (evt) => {
     })
     .catch((err) => {
       console.log(err);
-
+      // если ссылка не на картинку, то показываем кастомную ошибку
       showInputError(
         formEditAvatar,
         avatarInput,
@@ -304,10 +315,25 @@ formEditAvatar.addEventListener("submit", (evt) => {
     });
 });
 
-const renderLoading = (isLoading, buttonElement) => {
-  if (isLoading) {
-    buttonElement.textContent = "Сохранение...";
-  } else {
-    buttonElement.textContent = "Сохранить";
-  }
+//  ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ КАРТОЧКИ
+
+let handleConfirm;
+// находим элементы ДОМ
+const confirmPopup = document.querySelector(".popup_type_confirmation");
+const confirmForm = confirmPopup.querySelector(".popup__form");
+
+export const openConfirmPopup = (deleteOnConfirm) => {
+  // запоминаем переданную функцию
+  handleConfirm = deleteOnConfirm;
+  // открываем пока другой попап
+  openModal(confirmPopup);
 };
+
+confirmForm.addEventListener("submit", (evt) => {
+  evt.preventDefault();
+  if (handleConfirm) {
+    // вызываем сохраненную функцию удаления карточки
+    handleConfirm();
+    closeModal(confirmPopup);
+  }
+});
